@@ -1,9 +1,14 @@
 # Misc
 2024-GroupProject_Big_Data.pdf
 big-data-project.code-workspace
+installs/
 
 # PDFs
 2024-GroupProject_Big_Data.pdf
+literature/
 
 #data
 data/
+
+#Temporary Files
+*.ipynb_checkpoints

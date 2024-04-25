@@ -6,13 +6,21 @@ authors = ["Sudarsaam <sudarsaan@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = ">=3.9,<3.11"
 pandas = "^2.2.1"
 pyspark = "^3.5.1"
+cfgrib = "^0.9.11.0"
+xarray = "^2024.3.0"
+eccodes = "^1.7.0"
+netcdf4 = "^1.6.5"
+pydantic-settings = "^2.2.1"
 
 
 [tool.poetry.group.dev.dependencies]
 ipykernel = "^6.29.3"
+cdsapi = "^0.6.1"
+pandas-profiling = "^3.6.6"
+sweetviz = "^2.3.1"
 
 [build-system]
 requires = ["poetry-core"]
