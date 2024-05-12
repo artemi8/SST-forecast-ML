@@ -35,7 +35,6 @@ services:
       - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://myuser:mypass@postgres-db/airflow_db
       - AIRFLOW__CORE__EXECUTOR=LocalExecutor
       - AIRFLOW_CONN_SPARK_DEFAULT=spark://spark-master:7077
-      # - JAVA_HOME=/opt/java/openjdk
     command: ["airflow", "scheduler"]
     volumes:
       - ./dags:/usr/local/airflow/dags
@@ -72,7 +71,6 @@ services:
       - SPARK_MODE=worker
       - SPARK_MASTER=spark://spark-master:7077
       - JAVA_HOME=/opt/bitnami/java
-      # - PATH=$PATH:/opt/spark/bin
 
     depends_on:
       - spark-master
