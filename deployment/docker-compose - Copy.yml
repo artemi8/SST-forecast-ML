@@ -1,0 +1,109 @@
+services:
+  airflow-webserver:
+    build:
+      context: ./airflow_service
+      dockerfile: DockerFile
+    restart: on-failure
+    depends_on:
+      # - airflow-scheduler
+      - postgres-db
+      # - spark-inference-service
+      # - spark-preprocessing-service
+    environment:
+      # - LOAD_EX=n
+      # - EXECUTOR=Local
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://myuser:mypass@postgres-db/airflow_db
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor 
+      - AIRFLOW__SCHEDULER__SECRET_KEY=f05527e9a49ab5727f32e7d286f6d5a80b368f8bec7666469b6775bd5d6c8857
+    ports:
+      - "8080:8080"
+    command: ["airflow", "webserver"]
+    volumes:
+      - ./dags:/usr/local/airflow/dags
+      - //var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - airflow-network
+
+  airflow-scheduler:
+    build:
+      context: ./airflow_service
+      dockerfile: DockerFile
+    restart: on-failure
+    depends_on:
+      - postgres-db
+    environment:
+      # - LOAD_EX=n
+      # - EXECUTOR=Local
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://myuser:mypass@postgres-db/airflow_db
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__SCHEDULER__SECRET_KEY=f05527e9a49ab5727f32e7d286f6d5a80b368f8bec7666469b6775bd5d6c8857
+    command: ["airflow", "scheduler"]
+    volumes:
+      - ./dags:/usr/local/airflow/dags
+      - //var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - airflow-network
+
+  data-ingestion-service:
+    build:
+      context: ./spark_data_ingestion_service
+      dockerfile: Dockerfile 
+    depends_on:
+      - cassandra
+    networks:
+      - airflow-network
+
+  # spark-inference-service:
+  #   build:
+  #     context: ./spark_inference_service
+  #     dockerfile: DockerFile
+  #   networks:
+  #     - airflow-network
+
+  spark-preprocessing-service:
+    build:
+      context: ./spark_pre_processing_service
+      dockerfile: DockerFile
+    depends_on:
+      - cassandra
+    networks:
+      - airflow-network
+
+  cassandra:
+    build:
+      context: ./cassandra_service
+      dockerfile: DockerFile 
+    ports:
+      - "9042:9042"
+      - "7199:7199"
+    volumes:
+      - ./cassandra_service/cassandra-data:/var/lib/cassandra
+      - ./cassandra_service/init_db:/docker-entrypoint-initdb.d
+    entrypoint: ["/docker-entrypoint-initdb.d/init-cassandra.sh"]
+    networks:
+      - airflow-network
+    environment:
+      - CASSANDRA_CLUSTER_NAME=TestCluster
+
+
+  postgres-db:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: myuser         # Your username
+      POSTGRES_PASSWORD: mypass     # Your password
+      POSTGRES_DB: airflow_db       # Your database name
+    ports:
+      - "5432:5432"
+    networks:
+      - airflow-network
+    volumes:
+      - ./postgres_service/postgres-data:/var/lib/postgresql/data  # Persistent data volume
+volumes:
+  cassandra-data:
+  postgres-data:
+  init_db:
+  dags:
+
+networks:
+  airflow-network:
+    driver: bridge

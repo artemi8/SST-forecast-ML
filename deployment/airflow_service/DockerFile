@@ -1,0 +1,27 @@
+FROM apache/airflow:latest
+
+# Optional: install additional packages
+
+COPY entrypoint.sh /entrypoint.sh
+
+USER root
+
+RUN chmod +x /entrypoint.sh
+RUN apt-get update
+RUN apt-get install -y iputils-ping
+RUN apt-get install -y nano
+
+USER airflow
+
+RUN pip install --upgrade pip
+RUN pip install apache-airflow-providers-docker
+RUN pip install apache-airflow-providers-apache-spark
+
+# Copy the DAGs
+COPY ./dags /usr/local/airflow/dags
+COPY ./dags /opt/airflow/dags
+COPY ./airflow.cfg /opt/airflow/airflow.cfg
+
+
+ENTRYPOINT ["/entrypoint.sh"]
+

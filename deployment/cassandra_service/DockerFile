@@ -1,0 +1,5 @@
+# Start with the official Cassandra base image
+FROM cassandra:latest
+
+# Copy the custom Cassandra configuration file into the image
+COPY ./init_db/cassandra.yaml /etc/cassandra/cassandra.yaml

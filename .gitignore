@@ -7,8 +7,15 @@ installs/
 2024-GroupProject_Big_Data.pdf
 literature/
 
+#DB
+deployment/postgres_service/postgres-data/
+deployment/cassandra_service/cassandra-data/
+
 #data
 data/
-
+development/EDA/images/
+development/EDA/new_data.nc
+development/EDA/pickled_files/
+development/EDA/Sample-Cleaned-Processed-ERA5-82-23-three-hrs.csv
 #Temporary Files
 *.ipynb_checkpoints

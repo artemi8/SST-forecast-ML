@@ -1,0 +1,120 @@
+services:
+  airflow-webserver:
+    build:
+      context: ./airflow_service
+      dockerfile: DockerFile
+    restart: on-failure
+    depends_on:
+      - airflow-scheduler
+      - postgres-db
+    environment:
+      # - LOAD_EX=n
+      # - EXECUTOR=Local
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://myuser:mypass@postgres-db/airflow_db
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor 
+      - AIRFLOW_CONN_SPARK_DEFAULT=spark://spark-master:7077
+    ports:
+      - "8080:8080"
+    command: ["airflow", "webserver"]
+    volumes:
+      - ./dags:/usr/local/airflow/dags
+      - //var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - airflow-network
+
+  airflow-scheduler:
+    build:
+      context: ./airflow_service
+      dockerfile: DockerFile
+    restart: on-failure
+    depends_on:
+      - postgres-db
+    environment:
+      # - LOAD_EX=n
+      # - EXECUTOR=Local
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://myuser:mypass@postgres-db/airflow_db
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW_CONN_SPARK_DEFAULT=spark://spark-master:7077
+      # - JAVA_HOME=/opt/java/openjdk
+    command: ["airflow", "scheduler"]
+    volumes:
+      - ./dags:/usr/local/airflow/dags
+      - //var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - airflow-network
+
+  data-ingestion-service:
+    build:
+      context: ./spark_data_ingestion_service
+      dockerfile: Dockerfile 
+    depends_on:
+      - cassandra
+    networks:
+      - airflow-network
+
+  spark-master:
+    image: bitnami-spark-cluster-image:latest   
+    ports:
+      - "8081:8080"
+      - "7077:7077"
+    environment:
+      - SPARK_MODE=master
+      - JAVA_HOME=/opt/bitnami/java
+      # - PATH=$PATH:/opt/spark/bin
+    networks:
+      - airflow-network
+    depends_on:
+      - cassandra
+
+  spark-worker:
+    image: bitnami-spark-cluster-image:latest
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER=spark://spark-master:7077
+      - JAVA_HOME=/opt/bitnami/java
+      # - PATH=$PATH:/opt/spark/bin
+
+    depends_on:
+      - spark-master
+      - cassandra
+    networks:
+      - airflow-network
+
+  cassandra:
+    build:
+      context: ./cassandra_service
+      dockerfile: DockerFile 
+    ports:
+      - "9042:9042"
+      - "7199:7199"
+    volumes:
+      - ./cassandra_service/cassandra-data:/var/lib/cassandra
+      - ./cassandra_service/init_db:/docker-entrypoint-initdb.d
+    entrypoint: ["/docker-entrypoint-initdb.d/init-cassandra.sh"]
+    networks:
+      - airflow-network
+    environment:
+      - CASSANDRA_CLUSTER_NAME=TestCluster
+
+
+  postgres-db:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: myuser         # Your username
+      POSTGRES_PASSWORD: mypass     # Your password
+      POSTGRES_DB: airflow_db       # Your database name
+    ports:
+      - "5432:5432"
+    networks:
+      - airflow-network
+    volumes:
+      - ./postgres_service/postgres-data:/var/lib/postgresql/data  # Persistent data volume
+volumes:
+  cassandra-data:
+  postgres-data:
+  init_db:
+  dags:
+
+networks:
+  airflow-network:
+    driver: bridge
