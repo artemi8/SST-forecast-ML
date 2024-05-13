@@ -3,7 +3,7 @@
 
 ## Project Overview
 
-This project is dedicated to forecasting Sea Surface Temperature (SST) using a sophisticated data pipeline and machine learning models. Leveraging the ERA5 reanalysis hourly data from the Climate Data Store (CDS), our approach employs two forecasting models: Facebook's Prophet and the RandomForest Regressor from Apache Spark's MLlib. This project showcases the integration of big data technologies and their scalability with an increasing influx of data, critical for dynamic environmental forecasting.
+This project is dedicated to forecasting Sea Surface Temperature (SST) using a sophisticated data pipeline and machine learning models. Leveraging the ERA5 reanalysis hourly data from the Climate Data Store (CDS), our approach employs two forecasting models: Facebook's Prophet and the Vector Auto Regressive model from the package Statsmodel. This project showcases the integration of big data technologies and their scalability with an increasing influx of data, critical for dynamic environmental forecasting.
 
 ### Key Objectives
 
