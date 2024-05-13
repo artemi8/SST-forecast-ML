@@ -11,7 +11,7 @@ This project is dedicated to forecasting Sea Surface Temperature (SST) using a s
 - **Comparative Analysis**: Provide a comparative study of the two forecasting models used.
 - **Significance**: Highlight the importance of forecasting SST in the context of global climate monitoring and its wider impacts.
 
-## Architecture
+## Tools Used
 
 The project utilizes a robust architecture involving several big data tools:
 - **Apache Airflow**: Manages the workflow automation.
@@ -19,6 +19,11 @@ The project utilizes a robust architecture involving several big data tools:
 - **Apache Cassandra**: Serves as the primary database for storing incoming and processed data.
 - **PostgreSQL**: Stores processed data for reporting and visualization.
 - **Tableau**: Used for visualizing the forecasting results.
+
+## Architecture
+<!-- ![Architecture Diagram](images/architecture_diagram.png) -->
+<img src="images/architecture_diagram.png" alt="Architecture Diagram" width="400" height="350"/> <!-- Set both width and height -->
+
 
 ### Data Pipeline
 
