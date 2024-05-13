@@ -42,6 +42,12 @@ preprocess = BashOperator(
     dag=t1
     )
 
+inference = BashOperator(
+    task_id='run_inference',
+    bash_command=f'docker exec deployment-spark-master-1 {spark_command} /opt/spark-apps/run_inference.py',
+    dag=t1
+    )
+
 # preprocess = SparkSubmitOperator(
 #     task_id='preprocess_data',
 #     application='/opt/spark-apps/preprocess.py',
@@ -51,7 +57,7 @@ preprocess = BashOperator(
 #     dag=t1,
 # )
 
-data_ingestion_task >> preprocess
+data_ingestion_task >> preprocess >> inference
 
 
 # t2 = DAG(

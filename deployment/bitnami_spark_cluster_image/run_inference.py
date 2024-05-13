@@ -1,29 +1,62 @@
 from pyspark.sql import SparkSession
-from pyspark.ml import PipelineModel
+from pyspark.sql.functions import col
+from pyspark.sql.utils import AnalysisException
+from pyspark.sql.functions import col, last
+from pyspark.sql.window import Window
+import sys
 
-def run_inference():
-    spark = SparkSession.builder \
-        .master("spark://master-node:7077") \
-        .appName("ClimateDataInference") \
-        .config("spark.cassandra.connection.host", "cassandra-node") \
-        .getOrCreate()
+    # create a SparkSession
+print("SPARK LOGS : Starting Spark Run")
+spark = SparkSession.builder \
+    .appName("ClimateDataPreprocessing") \
+    .config("spark.cassandra.connection.host", "cassandra") \
+    .config("spark.cassandra.connection.port", "9042") \
+    .getOrCreate()
 
-    model = PipelineModel.load("/path/to/saved/model")
-
-    cleaned_df = spark.read \
-        .format("org.apache.spark.sql.cassandra") \
-        .options(table="cleaned_data", keyspace="climate_keyspace") \
+try:
+# read data from Cassandra
+    df = spark.read.format("org.apache.spark.sql.cassandra") \
+        .options(table="era5_processed", keyspace="cds_data") \
         .load()
 
-    predictions = model.transform(cleaned_df)
+    # show the top five rows
 
-    predictions.write \
-        .format("org.apache.spark.sql.cassandra") \
-        .options(table="predictions", keyspace="climate_keyspace") \
-        .mode("append") \
-        .save()
+    # limit the DataFrame to 5 rows
+    df = df.limit(5)
 
+    # df.show(5)
+    print("SPARK LOGS : Read the data successfully")
+
+    postgres_df = df.select(
+        col("time"),
+        col("sst"),
+        col("latitude"),
+        col("longitude")
+    ).withColumn("95_lower_bound_CI", col("sst") * 0.95 
+    ).withColumn("95_upper_bound_CI", col("sst") * 1.05)\
+    .withColumn("99_lower_bound_CI", col("sst") * 0.90)\
+    .withColumn("99_upper_bound_CI", col("sst") * 1.10)\
+    
+    print("Connecting to Postgres")
+    
+    # Database connection parameters
+    url = "jdbc:postgresql://postgres-db:5432/result_data"
+    properties = {
+        "user": "myuser",
+        "password": "mypass",
+        "driver": "org.postgresql.Driver"
+    }
+
+    # Write the DataFrame to PostgreSQL
+    try:
+        postgres_df.write.jdbc(url=url, table="sst_era5", mode="append", properties=properties)
+        print("Data written to PostgreSQL successfully!")
+    except Exception as e:
+        print("Failed to write data to PostgreSQL:", e)
+except AnalysisException as e:
+    print("An error occurred:", e)
+
+finally:
     spark.stop()
 
-if __name__ == "__main__":
-    run_inference()
+print("SPARK LOGS : Spark Run SUCESS")
