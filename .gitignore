@@ -19,3 +19,6 @@ development/EDA/pickled_files/
 development/EDA/Sample-Cleaned-Processed-ERA5-82-23-three-hrs.csv
 #Temporary Files
 *.ipynb_checkpoints
+development/model_building/RF_SST_PRED_model/
+development/model_building/testing_chunk.csv
+deployment/bitnami_spark_cluster_image/RF_SST_PRED_model/
