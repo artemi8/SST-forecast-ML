@@ -28,17 +28,20 @@ try:
 
     # limit the DataFrame to 5 rows
     df = df.limit(30)
-
+    print('DEBUG : Just read : ')
+    df.show(5)
     # df.show(5)
     print("SPARK LOGS : Read the data successfully")
 
     # Load the model
-    model_path = './RF_SST_PRED_model'  # Replace with your actual model path
+    model_path = '/opt/spark-apps/RF_SST_PRED_model'  # Replace with your actual model path
     loaded_model = PipelineModel.load(model_path)
     print("Model loaded successfully.")
 
     split_year_test = 2021
     df = df.filter(year(df['time']) >= split_year_test).cache()
+    print('DEBUG : Printing Spark DF After filter: ')
+    df.show(5)
 
     # Convert time column to timestamp and add time-based features
     df = df.withColumn("time", to_timestamp("time")).orderBy("time", "latitude", "longitude")
@@ -90,14 +93,17 @@ try:
 
     postgres_df = predictions.select(
         col("time"),
-        col("prediction"),
+        col("prediction").alias("avg_sst"),
         col("latitude"),
         col("longitude")
-    ).withColumn("95_lower_bound_CI", col("prediction") * 0.95 
-    ).withColumn("95_upper_bound_CI", col("prediction") * 1.05)\
-    .withColumn("99_lower_bound_CI", col("prediction") * 0.90)\
-    .withColumn("99_upper_bound_CI", col("prediction") * 1.10)\
+    ).withColumn("95_lower_bound_CI", col("avg_sst") * 0.95 
+    ).withColumn("95_upper_bound_CI", col("avg_sst") * 1.05)\
+    .withColumn("99_lower_bound_CI", col("avg_sst") * 0.90)\
+    .withColumn("99_upper_bound_CI", col("avg_sst") * 1.10)\
     
+    print('DEBUG : Printing Spark DF : ')
+    postgres_df.show(5)
+    print('\n\n\n\n')
     print("Connecting to Postgres")
     
     # Database connection parameters
